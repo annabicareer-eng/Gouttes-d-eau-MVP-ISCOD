@@ -4,7 +4,7 @@
 
 Ce projet a été réalisé dans le cadre du Projet Goutte d'Eau.
 
-L'objectif est de développer un MVP permettant d'estimer le risque de pluie dans les trois heures suivantes à partir des observations météorologiques SYNOP de Météo-France.
+L'objectif est de développer un MVP permettant d'estimer le risque de pluie dans les trois heures suivantes à partir des observations météorologiques SYNOP de Météo-France dans l'année 2025.
 
 ## Technologies utilisées
 
