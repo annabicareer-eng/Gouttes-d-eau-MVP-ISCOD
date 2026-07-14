@@ -84,17 +84,113 @@ def recuperer_observation(station_id, date_heure):
 
 
 st.set_page_config(
-    page_title="Projet Goutte d’Eau",
-    page_icon="💧",
-    layout="centered"
+    page_title="Prévision pluie Occitanie",
+    page_icon="🌾",
+    layout="wide"
 )
 
-st.title("💧 Projet Goutte d’Eau")
 
-st.write(
-    "Estimation du risque de pluie dans les trois heures suivantes "
-    "à partir d’une observation météorologique disponible."
+st.markdown(
+    """
+    <style>
+        .stApp {
+            background:
+                linear-gradient(
+                    135deg,
+                    #f5f2e8 0%,
+                    #eef3e5 48%,
+                    #e5edf1 100%
+                );
+        }
+
+        .block-container {
+            max-width: 1050px;
+            padding-top: 2.2rem;
+            padding-bottom: 3rem;
+        }
+
+        .header-box {
+            padding: 1.7rem 2rem;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.86);
+            border: 1px solid rgba(85, 107, 79, 0.18);
+            box-shadow: 0 8px 24px rgba(52, 70, 55, 0.08);
+            margin-bottom: 1.5rem;
+        }
+
+        .main-title {
+            font-size: 2.5rem;
+            font-weight: 750;
+            line-height: 1.1;
+            margin-bottom: 0.5rem;
+            color: #253328;
+        }
+
+        .subtitle {
+            font-size: 1.05rem;
+            color: #526056;
+            max-width: 760px;
+        }
+
+        .section-box {
+            padding: 1.4rem;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.88);
+            border: 1px solid rgba(85, 107, 79, 0.14);
+            box-shadow: 0 5px 16px rgba(52, 70, 55, 0.06);
+            margin-bottom: 1.2rem;
+        }
+
+        .info-box {
+            padding: 1rem 1.2rem;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.80);
+            border-left: 5px solid #596f52;
+            color: #39453c;
+            margin-top: 1.4rem;
+        }
+
+        div.stButton > button {
+            width: 100%;
+            border-radius: 10px;
+            min-height: 3rem;
+            font-size: 1rem;
+            font-weight: 650;
+        }
+
+        div[data-testid="stMetric"] {
+            background: rgba(255, 255, 255, 0.94);
+            padding: 1rem;
+            border-radius: 14px;
+            border: 1px solid rgba(85, 107, 79, 0.14);
+        }
+
+        div[data-testid="stAlert"] {
+            border-radius: 12px;
+        }
+
+        h1, h2, h3 {
+            color: #253328;
+        }
+    </style>
+    """,
+    unsafe_allow_html=True
 )
+
+
+st.markdown(
+    """
+    <div class="header-box">
+        <div class="main-title">Prévision du risque de pluie</div>
+        <div class="subtitle">
+            Estimation à court terme pour les stations SYNOP de la région
+            Occitanie, à partir d’une observation météorologique disponible.
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
 
 modele, features = charger_modele()
 stations = charger_stations()
@@ -104,30 +200,52 @@ options_stations = {
     for _, row in stations.iterrows()
 }
 
-station_libelle = st.selectbox(
-    "Station météorologique",
-    options=list(options_stations.keys()),
-    index=None,
-    placeholder="Choisir une station"
+
+st.markdown(
+    '<div class="section-box">',
+    unsafe_allow_html=True
 )
 
-date_heure = st.datetime_input(
-    "Date et heure de l’observation",
-    value=datetime(2025, 1, 1, 0, 0),
-    step=10800
-)
+st.subheader("Paramètres de prévision")
+
+col_station, col_date = st.columns(2)
+
+with col_station:
+    station_libelle = st.selectbox(
+        "Station météorologique",
+        options=list(options_stations.keys()),
+        index=None,
+        placeholder="Choisir une station"
+    )
+
+with col_date:
+    date_heure = st.datetime_input(
+        "Date et heure de l’observation",
+        value=datetime(2025, 1, 1, 0, 0),
+        step=10800
+    )
 
 st.caption(
-    "Les observations SYNOP utilisées sont généralement espacées de trois heures."
+    "Les observations SYNOP sont généralement disponibles toutes les trois heures."
 )
 
-if st.button(
+lancer_prediction = st.button(
     "Estimer le risque de pluie",
     type="primary",
     use_container_width=True
-):
+)
+
+st.markdown(
+    "</div>",
+    unsafe_allow_html=True
+)
+
+
+if lancer_prediction:
     if station_libelle is None:
-        st.error("Veuillez sélectionner une station.")
+        st.error(
+            "Veuillez sélectionner une station météorologique."
+        )
         st.stop()
 
     station_id = options_stations[
@@ -141,8 +259,9 @@ if st.button(
 
     if observation.empty:
         st.error(
-            "Aucune observation trouvée pour cette date et cette station. "
-            "Le MVP nécessite une observation déjà enregistrée dans la base."
+            "Aucune observation n’est disponible pour cette date "
+            "et cette station. Sélectionnez une observation présente "
+            "dans la base SYNOP 2025."
         )
         st.stop()
 
@@ -192,18 +311,28 @@ if st.button(
     else:
         niveau = "Élevé"
 
-    st.subheader("Résultat")
+    st.markdown(
+        '<div class="section-box">',
+        unsafe_allow_html=True
+    )
 
-    col1, col2 = st.columns(2)
+    st.subheader("Résultat de la prévision")
+
+    col1, col2, col3 = st.columns(3)
 
     col1.metric(
         "Probabilité de pluie",
-        f"{probabilite * 100:.2f} %"
+        f"{probabilite * 100:.1f} %"
     )
 
     col2.metric(
         "Niveau de risque",
         niveau
+    )
+
+    col3.metric(
+        "Horizon",
+        "3 heures"
     )
 
     if classe == 1:
@@ -223,14 +352,23 @@ if st.button(
     st.write(
         f"**Date observée :** {date_heure}"
     )
-    st.write(
-        "**Horizon :** trois heures"
+
+    st.markdown(
+        "</div>",
+        unsafe_allow_html=True
     )
 
-st.divider()
 
-st.info(
-    "Limite du MVP : l’application utilise des observations déjà présentes "
-    "dans SQLite. Une version industrialisée intégrerait des données météo "
-    "en temps réel ou des prévisions externes."
+st.markdown(
+    """
+    <div class="info-box">
+        <strong>Périmètre du MVP</strong><br>
+        L’application utilise les observations météorologiques SYNOP de 2025,
+        stockées dans SQLite, pour estimer le risque de pluie dans les trois
+        heures suivantes. Une version industrialisée intégrera des données
+        météorologiques en temps réel et des prévisions externes afin
+        d’étendre l’horizon de prévision à 24 heures.
+    </div>
+    """,
+    unsafe_allow_html=True
 )
